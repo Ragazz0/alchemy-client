@@ -1,5 +1,5 @@
-PMID-71.txt False False
-PMID-1740667.txt False False
+PMID-71.txt False False # "mouse ECD-conjugated" two words order switched and there is another "mouse" nearby
+PMID-1740667.txt False False # tailing space causes differences
 PMID-101.txt False False
 PMID-10415609.txt False False
 PMID-4.txt False False
