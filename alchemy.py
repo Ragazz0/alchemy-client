@@ -8,6 +8,5 @@ if __name__ == '__main__':
         sys.exit(0)
         
     corpus_path = sys.argv[1]
-    
-    if config.READER == 'AnnReader':
-        reader = AnnReader()
+    corpus_reader = config.READER
+    corpus_reader.parse_corpus(corpus_path, step=config.STEP)
