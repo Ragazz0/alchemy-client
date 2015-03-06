@@ -79,7 +79,6 @@ class Corpus(object):
             original_text = original_texts.get(doc_id)
             if original_text is None:
                 raise IOError('original text not found')
-
             text = annotation.text
             AnnotationAligner.align(annotation, text, original_text)
             annotation.text = original_text
@@ -124,6 +123,8 @@ class Corpus(object):
         curr_count = 0
         for root, _, files in os.walk(corpus_path):
             for f in files:
+                # if f != '1347968.ann':
+                #     continue
                 if not f.endswith(pivot):
                     continue
 
@@ -153,3 +154,12 @@ class Corpus(object):
                     print(response)
                     curr_slice = {}
                     curr_count = 0
+                    
+        annotations = config.PROCESSOR(curr_slice)
+        self.align(annotations)
+        packed = {}
+        for doc_id, annotation in annotations.items():
+            annotation.text = ''
+            packed[doc_id] = annotation.pack()
+        response = self.post_annotation(packed)
+        print(response)
