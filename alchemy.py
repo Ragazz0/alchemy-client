@@ -1,6 +1,6 @@
 import config
 import sys
-from submodules.annotation.readers import *
+from client.corpus import Corpus
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -8,5 +8,5 @@ if __name__ == '__main__':
         sys.exit(0)
         
     corpus_path = sys.argv[1]
-    corpus_reader = config.READER
-    corpus_reader.parse_corpus(corpus_path, step=config.STEP)
+    corpus = Corpus()
+    corpus.process(corpus_path)

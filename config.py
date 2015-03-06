@@ -5,11 +5,12 @@ API_BASE = 'http://127.0.0.1:8000/alchemy/'
 USERNAME = 'ligang'
 PASSWORD = '123456'
 
-# the reader used to read the files
-# available readers: AnnReader, JsonReader, RlimsReader, SGMLReader
-from client.ann_corpus import AnnCorpus
+# the processor for the files
+from client.ann_corpus import process
+PROCESSOR = process
 
-READER = AnnCorpus()
+# required suffix
+SUFFIX = ('.ann', '.txt')
 
 # submit to server at each 100 PMIDs
 STEP = 100
@@ -22,8 +23,8 @@ ENTITY_CATEGORY = ('SpecificDisease', 'Modifier', 'DiseaseClass', 'CompositeMent
 
 # relation categories
 RELATION_CATEGORY = (
-    ('Phosphorylation', (('Substrate', 'Gene'),
-                         ('Kinase', 'Gene'),
-                         ('Site', 'Site'),
-                         ('Trigger', 'Trigger')))
+    ('Phosphorylation', ('Substrate',
+                         'Kinase', 
+                         'Site', 
+                         'Trigger'))
     ,)
