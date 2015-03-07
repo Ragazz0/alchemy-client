@@ -39,7 +39,7 @@ class Corpus(object):
         return response
 
     def post_version(self, version, username, password):
-        response = self.api(self.api_version, {'username': username, 
+        response = self.api(self.api_version, {'username': username,
                                                'password': password,
                                                'version': version})
         return response
@@ -110,7 +110,8 @@ class Corpus(object):
 
         # add relation category and argument roles
         print('Add relation category or argument role')
-        response = self.post_relation_category(config.RELATION_CATEGORY, config.USERNAME, config.PASSWORD, config.VERSION)
+        response = self.post_relation_category(config.RELATION_CATEGORY, config.USERNAME, config.PASSWORD,
+                                               config.VERSION)
         print(response)
         if not response.get('success'):
             print('Add relation category or argument role failed', file=sys.stderr)
@@ -121,16 +122,17 @@ class Corpus(object):
         step = config.STEP
         curr_slice = {}
         curr_count = 0
+        total_count = 0
         for root, _, files in os.walk(corpus_path):
             for f in files:
                 # if f != '1347968.ann':
-                #     continue
+                # continue
                 if not f.endswith(pivot):
                     continue
 
                 doc_id = f[:-len(pivot)]
                 root_path = os.path.join(root, doc_id)
-                
+
                 all_exists = True
                 for suffix in config.SUFFIX[1:]:
                     if not os.path.isfile(root_path + suffix):
@@ -142,6 +144,7 @@ class Corpus(object):
 
                 curr_slice[doc_id] = root_path
                 curr_count += 1
+                total_count += 1
 
                 if curr_count >= step:
                     annotations = config.PROCESSOR(curr_slice)
@@ -150,16 +153,22 @@ class Corpus(object):
                     for doc_id, annotation in annotations.items():
                         annotation.text = ''
                         packed[doc_id] = annotation.pack()
+
+                    print("%s-%s docs" % (total_count - step + 1, total_count))
                     response = self.post_annotation(packed)
                     print(response)
                     curr_slice = {}
                     curr_count = 0
-                    
-        annotations = config.PROCESSOR(curr_slice)
-        self.align(annotations)
-        packed = {}
-        for doc_id, annotation in annotations.items():
-            annotation.text = ''
-            packed[doc_id] = annotation.pack()
-        response = self.post_annotation(packed)
-        print(response)
+
+        # import left documents
+        if len(curr_slice) > 0:
+            annotations = config.PROCESSOR(curr_slice)
+            self.align(annotations)
+            packed = {}
+            for doc_id, annotation in annotations.items():
+                annotation.text = ''
+                packed[doc_id] = annotation.pack()
+
+            print("%s-%s docs" % (total_count - step, total_count))
+            response = self.post_annotation(packed)
+            print(response)

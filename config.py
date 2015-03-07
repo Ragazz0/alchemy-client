@@ -16,7 +16,7 @@ SUFFIX = ('.ann', '.txt')
 STEP = 100
 
 # the version of the imported data
-VERSION = 'NCBI_disease_train'
+VERSION = 'test'
 
 # entity categories
 ENTITY_CATEGORY = ('SpecificDisease', 'Modifier', 'DiseaseClass', 'CompositeMention')
