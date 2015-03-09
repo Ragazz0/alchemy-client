@@ -10,25 +10,29 @@ from multiprocessing import Pool
 # parallel part
 # python multiprocessing pool only supports module-level function
 def post_annotation_slice(info):
+    try:
+        file_slice, curr_count, total_count = info
+        
+        # get annotations
+        annotations = CorpusProcessor.process_files_slice(file_slice)
     
-    file_slice, curr_count, total_count = info
+        # get original text
+        # dict_keys is not serializable
+        doc_ids = list(annotations.keys())
+        original_texts = CorpusProcessor.get_original_text(doc_ids)
     
-    # get annotations
-    annotations = CorpusProcessor.process_files_slice(file_slice)
-
-    # get original text
-    # dict_keys is not serializable
-    doc_ids = list(annotations.keys())
-    original_texts = CorpusProcessor.get_original_text(doc_ids)
-
-    # align
-    CorpusProcessor.align(annotations, original_texts)
-
-    # post annotations
-    response = CorpusProcessor.post_annotation(annotations)
-    # print(response)
-    imported_count = response.get('imported_doc')
-    return imported_count, total_count
+        # align
+        CorpusProcessor.align(annotations, original_texts)
+    
+        # post annotations
+        response = CorpusProcessor.post_annotation(annotations)
+        # print(response)
+        imported_count = response.get('imported_doc')
+        return imported_count, total_count
+    except Exception as e:
+        print(e)
+        print(info)
+        return None, None
 
 
 class CorpusProcessor(object):
@@ -198,6 +202,9 @@ class CorpusProcessor(object):
         
         imported_total_count = 0
         for imported_count, total_count in results:
-            imported_total_count += imported_count
-            print("%s docs / %s files" % (imported_total_count, total_count))
+            if imported_count is None:
+                print('Exception happens')
+            else:
+                imported_total_count += imported_count
+                print("%s docs / %s files" % (imported_total_count, total_count))
 

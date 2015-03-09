@@ -6,7 +6,6 @@ def process(filepath):
 
     # read annotation and text
     verbose_file = filepath + '.verbose'
-    print(verbose_file)
     tuples = parser.parse_file(verbose_file)
     annotations = parser.to_ann(tuples)
     
