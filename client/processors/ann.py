@@ -2,6 +2,15 @@ import os
 from submodules.annotation.readers import AnnParser
 from submodules.annotation.utils import FileProcessor
 
+# required suffix
+SUFFIX = ('.ann', '.txt')
+
+# entity categories
+ENTITY_CATEGORY = ('SpecificDisease', 'Modifier', 'DiseaseClass', 'CompositeMention')
+
+# relation categories
+RELATION_CATEGORY = None
+
 
 def process(filepath):
     parser = AnnParser()

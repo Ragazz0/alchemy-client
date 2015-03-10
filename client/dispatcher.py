@@ -36,8 +36,7 @@ def post_annotation_slice(info):
         return read_count, imported_count, total_count
     except Exception as e:
         print(e)
-        print(info)
-        return None, None
+        return None, None, None
 
 
 class CorpusProcessor(object):
@@ -103,8 +102,8 @@ class CorpusProcessor(object):
                                         'username': config.USERNAME,
                                         'password': config.PASSWORD,
                                         'collection': config.COLLECTION,
-                                        'relation_category_set': json.dumps(config.RELATION_CATEGORY),
-                                        'entity_category_set': json.dumps(config.ENTITY_CATEGORY)}
+                                        'relation_category_set': json.dumps(config.processor.RELATION_CATEGORY),
+                                        'entity_category_set': json.dumps(config.processor.ENTITY_CATEGORY)}
         )
         return response
 
@@ -121,13 +120,13 @@ class CorpusProcessor(object):
     def process_files_slice(files):
         annotations = {}
         for f in files:
-            slice_annotations = config.processor(f)
+            slice_annotations = config.processor.process(f)
             annotations.update(slice_annotations)
         return annotations
 
     @staticmethod
     def get_files_slice(corpus_path, is_test):
-        pivot = config.SUFFIX[0]
+        pivot = config.processor.SUFFIX[0]
         step = config.STEP
         curr_slice = []
         curr_count = 0
@@ -141,7 +140,7 @@ class CorpusProcessor(object):
                 root_path = os.path.join(root, doc_id)
 
                 all_exists = True
-                for suffix in config.SUFFIX[1:]:
+                for suffix in config.processor.SUFFIX[1:]:
                     if not os.path.isfile(root_path + suffix):
                         all_exists = False
                         break
@@ -189,7 +188,8 @@ class CorpusProcessor(object):
 
             # add entity category
             print('Add entity category')
-            response = self.post_entity_category(config.ENTITY_CATEGORY, config.USERNAME, config.PASSWORD,
+            response = self.post_entity_category(config.processor.ENTITY_CATEGORY, 
+                                                 config.USERNAME, config.PASSWORD,
                                                  config.COLLECTION)
             print(response)
             if not response.get('success'):
@@ -198,7 +198,8 @@ class CorpusProcessor(object):
 
             # add relation category and argument roles
             print('Add relation category or argument role')
-            response = self.post_relation_category(config.RELATION_CATEGORY, config.USERNAME, config.PASSWORD,
+            response = self.post_relation_category(config.processor.RELATION_CATEGORY, 
+                                                   config.USERNAME, config.PASSWORD,
                                                    config.COLLECTION)
             print(response)
             if not response.get('success'):

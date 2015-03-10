@@ -10,7 +10,7 @@ PASSWORD = '123456'
 # processor = ann.process
 
 from client.processors import rlims
-processor = rlims.process
+processor = rlims
 
 # parallel workers number
 # recommended number is 4
@@ -18,23 +18,8 @@ WORKER = 4
 
 # submit to server at each 100 PMIDs
 # recommended range is 100-500
-STEP = 100
+STEP = 1
 
 # the collection name of the imported data
 COLLECTION = 'test'
 
-# required suffix
-# SUFFIX = ('.ann', '.txt')
-SUFFIX = ('.verbose',)
-
-# entity categories
-# ENTITY_CATEGORY = ('SpecificDisease', 'Modifier', 'DiseaseClass', 'CompositeMention')
-ENTITY_CATEGORY = ('Protein', 'Site', 'Trigger')
-
-# relation categories
-RELATION_CATEGORY = (
-    ('Phosphorylation', ('Substrate',
-                         'Kinase', 
-                         'Site', 
-                         'Trigger'))
-    ,)
