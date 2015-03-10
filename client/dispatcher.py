@@ -170,43 +170,43 @@ class CorpusProcessor(object):
         :type is_test: bool
         """
 
-        # add/verify user
-        print('Add or verify user ' + config.USERNAME)
-        response = self.post_user(config.USERNAME, config.PASSWORD)
-        print(response)
-        if not response.get('success'):
-            print('Add or verify user failed', file=sys.stderr)
-            return
+        if not is_test:
+            # add/verify user
+            print('Add or verify user ' + config.USERNAME)
+            response = self.post_user(config.USERNAME, config.PASSWORD)
+            print(response)
+            if not response.get('success'):
+                print('Add or verify user failed', file=sys.stderr)
+                return
 
-        # add version
-        print('Add collection ' + config.COLLECTION)
-        response = self.post_collection(config.COLLECTION, config.USERNAME, config.PASSWORD)
-        print(response)
-        if not response.get('success'):
-            print('Add collection failed', file=sys.stderr)
-            return
+            # add version
+            print('Add collection ' + config.COLLECTION)
+            response = self.post_collection(config.COLLECTION, config.USERNAME, config.PASSWORD)
+            print(response)
+            if not response.get('success'):
+                print('Add collection failed', file=sys.stderr)
+                return
 
-        # add entity category
-        print('Add entity category')
-        response = self.post_entity_category(config.ENTITY_CATEGORY, config.USERNAME, config.PASSWORD,
-                                             config.COLLECTION)
-        print(response)
-        if not response.get('success'):
-            print('Add entity category failed', file=sys.stderr)
-            return
+            # add entity category
+            print('Add entity category')
+            response = self.post_entity_category(config.ENTITY_CATEGORY, config.USERNAME, config.PASSWORD,
+                                                 config.COLLECTION)
+            print(response)
+            if not response.get('success'):
+                print('Add entity category failed', file=sys.stderr)
+                return
 
-        # add relation category and argument roles
-        print('Add relation category or argument role')
-        response = self.post_relation_category(config.RELATION_CATEGORY, config.USERNAME, config.PASSWORD,
-                                               config.COLLECTION)
-        print(response)
-        if not response.get('success'):
-            print('Add relation category or argument role failed', file=sys.stderr)
-            return
+            # add relation category and argument roles
+            print('Add relation category or argument role')
+            response = self.post_relation_category(config.RELATION_CATEGORY, config.USERNAME, config.PASSWORD,
+                                                   config.COLLECTION)
+            print(response)
+            if not response.get('success'):
+                print('Add relation category or argument role failed', file=sys.stderr)
+                return
 
         # start importing
         print('Start importing...')
-        imported_count = 0
 
         # import in parallel
         file_slices = self.get_files_slice(corpus_path, is_test)
