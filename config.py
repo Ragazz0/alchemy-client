@@ -1,5 +1,5 @@
 # central database url, ending with /
-API_BASE = 'http://127.0.0.1:8000/alchemy/'
+API_BASE = 'http://127.0.0.1:8080/alchemy/'
 
 # username and password
 USERNAME = 'ligang'
@@ -20,8 +20,8 @@ WORKER = 4
 # recommended range is 100-500
 STEP = 100
 
-# the version of the imported data
-VERSION = 'test'
+# the collection name of the imported data
+COLLECTION = 'test'
 
 # required suffix
 # SUFFIX = ('.ann', '.txt')
