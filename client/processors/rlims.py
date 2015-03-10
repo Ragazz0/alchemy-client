@@ -4,13 +4,14 @@ from submodules.annotation.readers import RlimsVerboseReader
 SUFFIX = ('.verbose',)
 
 # entity categories
-ENTITY_CATEGORY = ('Protein', 'Site', 'Trigger')
+ENTITY_CATEGORY = ('Protein', 'Site', 'Trigger', 'SiteOther')
 
 # relation categories
 RELATION_CATEGORY = (
     ('Phosphorylation', ('Substrate',
                          'Kinase',
                          'Site',
+                         'SiteOther',
                          'Trigger'))
     ,)
 
