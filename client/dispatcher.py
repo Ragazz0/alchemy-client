@@ -60,7 +60,7 @@ def post_annotation_slice(info):
         if not is_test:
             # get original text
             # dict_keys is not serializable
-            doc_ids = list(annotations.keys())
+            doc_ids = [a.get('doc_id') for a in annotations if a.get('doc_id') is not None]
             original_texts = CorpusProcessor.get_original_text(doc_ids)
 
             # align
@@ -76,7 +76,7 @@ def post_annotation_slice(info):
         return read_count, imported_count, countfile
     except Exception:
         traceback.print_exc()
-        return None, None
+        return None, None, None
 
 
 class CorpusProcessor(object):
@@ -149,7 +149,8 @@ class CorpusProcessor(object):
 
     @staticmethod
     def align(annotations, original_texts):
-        for doc_id, annotation in annotations.items():
+        for annotation in annotations:
+            doc_id = annotation.get('doc_id')
             original_text = original_texts.get(doc_id)
             if original_text is None:
                 print('original text not found: ' + doc_id)
