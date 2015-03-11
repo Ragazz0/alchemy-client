@@ -29,10 +29,13 @@ class AnnotationAligner(object):
             end = int(entity.get('end'))
 
             entity['start'] = alter2gold[start]
-            if alter2gold[end] - alter2gold[end - 1] > 1:
-                entity['end'] = alter2gold[end - 1] + 1
-            else:
-                entity['end'] = alter2gold[end]
+            try:
+                if alter2gold[end] - alter2gold[end - 1] > 1:
+                    entity['end'] = alter2gold[end - 1] + 1
+                else:
+                    entity['end'] = alter2gold[end]
+            except IndexError:
+                print(annotation.get('doc_id'),annotation.get('text'), original_text, sep="\t")
             entity['text'] = original_text[entity.get('start'):entity.get('end')]
         
         annotation['text'] = original_text
