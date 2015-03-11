@@ -6,19 +6,57 @@ import urllib.request
 import config
 from align.align import AnnotationAligner
 from multiprocessing import Pool
+from multiprocessing import current_process
+import types
+import traceback
 
+# def post_annotation_slice(info):
+# # parallel part
+# # python multiprocessing pool only supports module-level function
+#     try:
+#         file_slice, curr_count, total_count, is_test = info
+# 
+#         # get annotations
+#         annotations_stream = CorpusProcessor.get_annotations_slice(file_slice)
+#         read_count = 0
+#         imported_count = 0
+#         current = current_process()
+# 
+#         for annotations in annotations_stream:
+#             read_count += len(annotations)
+#             if not is_test:
+#                 # get original text
+#                 # dict_keys is not serializable
+#                 doc_ids = list(annotations.keys())
+#                 original_texts = CorpusProcessor.get_original_text(doc_ids)
+# 
+#                 # align
+#                 CorpusProcessor.align(annotations, original_texts)
+# 
+#                 # post annotations
+#                 response = CorpusProcessor.post_annotation(annotations)
+#                 # print(response)
+#                 imported_count = response.get('imported_doc')
+# 
+#             print("%s: read %s docs / imported %s docs / processed %s files" %
+#                   (current.name, read_count, imported_count, total_count))
+# 
+#         return read_count, imported_count, total_count
+#     except Exception as e:
+#         print(e)
+#         return None, None, None
 
-# parallel part
-# python multiprocessing pool only supports module-level function
 def post_annotation_slice(info):
+    # parallel part
+    # python multiprocessing pool only supports module-level function
     try:
-        file_slice, curr_count, total_count, is_test = info
+        annotations, countfile, is_test = info
 
         # get annotations
-        annotations = CorpusProcessor.process_files_slice(file_slice)
-        read_count = len(annotations)
+        read_count = 0
         imported_count = 0
-
+        current = current_process()
+        read_count += len(annotations)
         if not is_test:
             # get original text
             # dict_keys is not serializable
@@ -33,10 +71,12 @@ def post_annotation_slice(info):
             # print(response)
             imported_count = response.get('imported_doc')
 
-        return read_count, imported_count, total_count
-    except Exception as e:
-        print(e)
-        return None, None, None
+        # print("%s: read %s docs / imported %s docs / processed %s file" %
+        #       (current.name, read_count, imported_count, countfile))
+        return read_count, imported_count, countfile
+    except Exception:
+        traceback.print_exc()
+        return None, None
 
 
 class CorpusProcessor(object):
@@ -125,9 +165,33 @@ class CorpusProcessor(object):
         return annotations
 
     @staticmethod
-    def get_files_slice(corpus_path, is_test):
+    def get_files_all(corpus_path):
         pivot = config.processor.SUFFIX[0]
-        step = config.STEP
+        for root, _, files in os.walk(corpus_path):
+            for f in files:
+                if not f.endswith(pivot):
+                    continue
+
+                doc_id = f[:-len(pivot)]
+                root_path = os.path.join(root, doc_id)
+
+                all_exists = True
+                for suffix in config.processor.SUFFIX[1:]:
+                    if not os.path.isfile(root_path + suffix):
+                        all_exists = False
+                        break
+
+                if not all_exists:
+                    continue
+
+                yield root_path
+
+    @staticmethod
+    def get_files_slice(corpus_path, is_test):
+        # get file stream
+        # not used if use annotation stream
+        pivot = config.processor.SUFFIX[0]
+        step = config.FILE_STEP
         curr_slice = []
         curr_count = 0
         total_count = 0
@@ -160,6 +224,49 @@ class CorpusProcessor(object):
         if len(curr_slice) > 0:
             yield curr_slice, curr_count, total_count, is_test
 
+    @staticmethod
+    def get_annotations_slice(files_slice, is_test):
+        """ a generator for annotations stream
+        :param files_slice: a list of file ids
+        :type files_slice: list | generator
+        :return: list of annotations
+        :rtype: list
+        """
+
+        need_stream = []
+        count = 0
+        for f in files_slice:
+            slice_annotations = config.processor.process(f)
+            need_length = config.DOC_STEP - len(need_stream)
+            if isinstance(slice_annotations, types.GeneratorType):
+                while True:
+                    try:
+                        for _ in range(need_length):
+                            need_stream.append(next(slice_annotations))
+                        yield need_stream, count, is_test
+                        need_stream = []
+                        need_length = config.DOC_STEP
+                    except StopIteration:
+                        break
+            elif isinstance(slice_annotations, list):
+                while True:
+                    need_stream += slice_annotations[:need_length]
+                    if len(need_stream) < config.DOC_STEP:
+                        break
+                    else:
+                        yield need_stream, count, is_test
+                        need_stream = []
+                        # shrink list
+                        slice_annotations = slice_annotations[need_length:]
+                        # reset need_length
+                        need_length = config.DOC_STEP
+            else:
+                raise TypeError('process() should return list or generator.')
+
+            count += 1
+
+        yield need_stream, count, is_test
+
     def process(self, corpus_path, is_test=True):
         """ read corpus, get original text from server, align, and send
         annotations back to server, using multiprocessing
@@ -188,7 +295,7 @@ class CorpusProcessor(object):
 
             # add entity category
             print('Add entity category')
-            response = self.post_entity_category(config.processor.ENTITY_CATEGORY, 
+            response = self.post_entity_category(config.processor.ENTITY_CATEGORY,
                                                  config.USERNAME, config.PASSWORD,
                                                  config.COLLECTION)
             print(response)
@@ -198,7 +305,7 @@ class CorpusProcessor(object):
 
             # add relation category and argument roles
             print('Add relation category or argument role')
-            response = self.post_relation_category(config.processor.RELATION_CATEGORY, 
+            response = self.post_relation_category(config.processor.RELATION_CATEGORY,
                                                    config.USERNAME, config.PASSWORD,
                                                    config.COLLECTION)
             print(response)
@@ -209,11 +316,16 @@ class CorpusProcessor(object):
         # start importing
         print('Start importing...')
 
-        # import in parallel
-        file_slices = self.get_files_slice(corpus_path, is_test)
         pool = Pool(processes=config.WORKER)
 
-        results = pool.imap(post_annotation_slice, file_slices)
+        # import in parallel
+        # use file stream
+        # file_slices = self.get_files_slice(corpus_path, is_test)
+
+        # use docs stream
+        files_all = self.get_files_all(corpus_path)
+        annotations_stream = self.get_annotations_slice(files_all, is_test)
+        results = pool.imap(post_annotation_slice, annotations_stream)
 
         imported_total_count = 0
         read_total_count = 0
@@ -224,5 +336,7 @@ class CorpusProcessor(object):
                 read_total_count += read_count
                 imported_total_count += imported_count
                 print("read %s docs / imported %s docs / processed %s files" % (
-                read_total_count, imported_total_count, total_count))
+                    read_total_count, imported_total_count, total_count))
+                # print("read %s docs / imported %s docs" % (
+                #     read_total_count, imported_total_count))
 

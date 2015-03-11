@@ -15,17 +15,18 @@ RELATION_CATEGORY = (
                          'Trigger'))
     ,)
 
+# 7085
 
 def process(filepath):
     parser = RlimsVerboseReader()
-    annotations_packed = {}
+    annotations_packed = []
 
     # read annotation and text
     verbose_file = filepath + '.verbose'
     tuples = parser.parse_file(verbose_file)
     annotations = parser.to_ann(tuples)
 
-    for doc_id, annotation in annotations.items():
-        annotations_packed[doc_id] = annotation.pack()
+    for annotation in annotations:
+        annotations_packed.append(annotation.pack())
 
     return annotations_packed

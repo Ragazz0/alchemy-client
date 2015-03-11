@@ -14,7 +14,7 @@ RELATION_CATEGORY = None
 
 def process(filepath):
     parser = AnnParser()
-    annotations = {}
+    annotations = []
 
     # read annotation
     ann_file = filepath + '.ann'
@@ -28,7 +28,7 @@ def process(filepath):
     annotation.text = text
 
     # get doc_id
-    doc_id = os.path.basename(filepath)
-    annotations[doc_id] = annotation.pack()
+    # doc_id = os.path.basename(filepath)
+    annotations.append(annotation.pack())
 
     return annotations
