@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import traceback
 from submodules.alignment.alignment import SegmentAlignment
 
 
@@ -30,12 +30,17 @@ class AnnotationAligner(object):
 
             entity['start'] = alter2gold[start]
             try:
-                if alter2gold[end] - alter2gold[end - 1] > 1:
+                if end >= len(alter2gold):
+                    # end is an index in a range, so it could
+                    # equal to the length of length of the altered string
+                    entity['end'] = alter2gold[-1]
+                elif end > 0 and alter2gold[end] - alter2gold[end - 1] > 1:
                     entity['end'] = alter2gold[end - 1] + 1
                 else:
                     entity['end'] = alter2gold[end]
             except IndexError:
-                print(annotation.get('doc_id'),annotation.get('text'), original_text, sep="\t")
+                traceback.print_exc()
+                print(annotation.get('doc_id'), len(alter2gold),start,end, sep="\t")
             entity['text'] = original_text[entity.get('start'):entity.get('end')]
         
         annotation['text'] = original_text
