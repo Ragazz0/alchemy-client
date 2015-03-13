@@ -30,3 +30,5 @@ def process(filepath):
         annotations_packed.append(annotation.pack())
 
     return annotations_packed
+    # TODO: there are errors importing Rlims results from lysine
+    # they should be fixed by iss-1, since they are IndexError

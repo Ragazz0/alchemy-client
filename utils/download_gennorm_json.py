@@ -96,3 +96,4 @@ with open('data/Rlims/all_pmid_list.txt') as handle:
         # break
 
     print(categories)
+    # TODO: there are errors in downloading gennorm results
