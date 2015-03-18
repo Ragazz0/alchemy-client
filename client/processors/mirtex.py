@@ -33,6 +33,11 @@ def process(filepath):
     ann_file = filepath + '.ann'
     annotation = parser.parse_file(ann_file)
 
+    # get doc_id
+    doc_id = os.path.basename(filepath)
+    annotation.doc_id = doc_id
+    annotation.filepath = filepath
+    
     # remove sentence entity
     annotation.entities = [e for e in annotation.entities if e.category != 'Sentence']
 
@@ -55,10 +60,6 @@ def process(filepath):
 
     # store text with annotation
     annotation.text = text
-
-    # get doc_id
-    doc_id = os.path.basename(filepath)
-    annotation.doc_id = doc_id
     
     annotations.append(annotation.pack())
     return annotations

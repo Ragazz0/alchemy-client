@@ -20,6 +20,11 @@ def process(filepath):
     ann_file = filepath + '.ann'
     annotation = parser.parse_file(ann_file)
 
+    # get doc_id
+    doc_id = os.path.basename(filepath)
+    annotation.doc_id = doc_id
+    annotation.filepath = filepath
+    
     # read text
     text_file = filepath + '.txt'
     text = FileProcessor.read_file(text_file)
@@ -27,8 +32,6 @@ def process(filepath):
     # store text with annotation
     annotation.text = text
 
-    # get doc_id
-    # doc_id = os.path.basename(filepath)
     annotations.append(annotation.pack())
 
     return annotations
