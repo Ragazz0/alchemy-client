@@ -239,6 +239,7 @@ class CorpusProcessor(object):
         for f in files_slice:
             slice_annotations = config.processor.process(f)
             need_length = config.DOC_STEP - len(need_stream)
+            count += 1
             if isinstance(slice_annotations, types.GeneratorType):
                 while True:
                     try:
@@ -263,8 +264,6 @@ class CorpusProcessor(object):
                         need_length = config.DOC_STEP
             else:
                 raise TypeError('process() should return list or generator.')
-
-            count += 1
 
         yield need_stream, count, is_test
 
