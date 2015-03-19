@@ -38,9 +38,12 @@ def process(filepath):
     annotation.doc_id = doc_id
     annotation.filepath = filepath
     
-    # remove sentence entity
+    # remove sentence and certain entities
     annotation.entities = [e for e in annotation.entities if e.category != 'Sentence']
-
+    to_remove_entity = [e for e in annotation.entities if e.text.lower() == 'luciferase reporter']
+    annotation.entities = [e for e in annotation.entities if e not in to_remove_entity]
+    to_remove_relation = []
+    
     for relation in annotation.relations:
         relation.category = 'MiRNA2Gene'
         if 'direction' in relation.property:
@@ -53,7 +56,12 @@ def process(filepath):
                 arg.role = 'Agent'
             elif arg.role == 'Arg2':
                 arg.role = 'Theme'
-        
+                
+            if arg.value in to_remove_entity:
+                to_remove_relation.append(relation)
+    
+    annotation.relations = [r for r in annotation.relations if r not in to_remove_relation]
+
     # read text
     text_file = filepath + '.txt'
     text = FileProcessor.read_file(text_file)
