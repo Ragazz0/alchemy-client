@@ -7,7 +7,7 @@ import json
 SUFFIX = ('.ann', '.txt')
 
 # entity categories
-ENTITY_CATEGORY = ('Gene', 'MiRNA')
+ENTITY_CATEGORY = ('Gene', 'MiRNA', 'Trigger')
 
 # relation categories
 RELATION_CATEGORY = (('MiRNA2Gene', ('Trigger', 'Agent', 'Theme')),
