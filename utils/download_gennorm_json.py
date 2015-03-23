@@ -3,12 +3,16 @@ from submodules.annotation.annotate import Annotation
 import json
 import time
 
+import sys
 
-curr = 59151
+pmid_file = sys.argv[1]
+gennorm_file = sys.argv[2]
+
+curr = 0
 step = 50
 base_url = 'http://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/PubTator/abstract_ann.cgi?Disease=1&Gene=1&Chemical=1&Mutation=1&Species=1&pmid='
 
-with open('data/Rlims/all_pmid_list.txt') as handle:
+with open(pmid_file) as handle:
     text = handle.read().strip().replace('\r', '')
     pmids = text.split('\n')
     categories = set()
@@ -67,6 +71,10 @@ with open('data/Rlims/all_pmid_list.txt') as handle:
                     if annotation.text[start - 1:end - 1].lower() == text.lower():
                         start -= 1
                         end -= 1
+                    
+                    # in case gennorm changes cases
+                    if annotation.text[start:end].lower() == text.lower():
+                        text = annotation.text[start:end]
     
                     if len(fields) > 5:
                         norm_ids = fields[5].split(',')
@@ -83,7 +91,7 @@ with open('data/Rlims/all_pmid_list.txt') as handle:
             if len(annotation.entities) > 0:
                 annotations[doc_id] = annotation
 
-        with open('data/Gennorm/jsonlines.json', 'a') as handle:
+        with open(gennorm_file, 'a') as handle:
             for doc_id, annotation in annotations.items():
                 packed = annotation.pack()
                 packed['doc_id'] = doc_id
