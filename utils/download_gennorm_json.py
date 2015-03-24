@@ -5,6 +5,16 @@ import time
 
 import sys
 
+import codecs
+
+# replace utf-8 char with space, since in gennorm results,
+# the abstracts seems encoded with utf-8, the entities are
+# encoded with ascii, with utf-8 chars repalced with spaces
+def replace_with_space(e):
+    return ' ', e.start +1
+
+codecs.register_error('replace_space', replace_with_space)
+
 pmid_file = sys.argv[1]
 gennorm_file = sys.argv[2]
 
@@ -28,7 +38,7 @@ with open(pmid_file) as handle:
         url = base_url + pmid_request
         request = urllib.request.Request(url)
         resource = urllib.request.urlopen(request)
-        results = resource.read().decode('utf-8')
+        results = resource.read().decode('ascii', errors="replace_space")
 
         blocks = results.strip().replace('\r', '').split('\n\n')
 
@@ -64,17 +74,37 @@ with open(pmid_file) as handle:
                     category = fields[4]
                     categories.add(category)
                     norm_ids = []
-    
-                    if end - start == len(text) - 1:
-                        start -= 1
-    
-                    if annotation.text[start - 1:end - 1].lower() == text.lower():
-                        start -= 1
-                        end -= 1
-                    
+
+                    if annotation.text[start:end].lower() != text.lower():
+                        for i in range(1, 5):
+                            if annotation.text[start - i:end].lower() == text.lower():
+                                start -= i
+                                break
+                            elif annotation.text[start:end-i].lower() == text.lower():
+                                end -= i
+                                break
+                            elif annotation.text[start - i:end - i].lower() == text.lower():
+                                start -= i
+                                end -= i
+                                break
+                            elif annotation.text[start + i:end + i].lower() == text.lower():
+                                start += i
+                                end += i
+                                break
+                            
+                        if start < 0:
+                            start = 0
+                        elif start >= len(annotation.text):
+                            print(doc_id, "start > len(text)", line)
+                            continue
+                        if end < 0:
+                            print(doc_id, "end < 0", line)
+                            continue
+                        elif end > len(annotation.text):
+                            end = len(annotation.text)
+
                     # in case gennorm changes cases
-                    if annotation.text[start:end].lower() == text.lower():
-                        text = annotation.text[start:end]
+                    text = annotation.text[start:end]
     
                     if len(fields) > 5:
                         norm_ids = fields[5].split(',')
