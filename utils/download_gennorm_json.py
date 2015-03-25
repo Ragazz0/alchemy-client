@@ -11,7 +11,8 @@ import codecs
 # the abstracts seems encoded with utf-8, the entities are
 # encoded with ascii, with utf-8 chars repalced with spaces
 def replace_with_space(e):
-    return ' ', e.start +1
+    return ' ', e.start + 1
+
 
 codecs.register_error('replace_space', replace_with_space)
 
@@ -53,19 +54,19 @@ with open(pmid_file) as handle:
             try:
                 title_line = lines[0].split('|')
                 abs_line = lines[1].split('|')
-    
+
                 doc_id = title_line[0]
                 if len(title_line) > 2:
                     title = title_line[2]
-    
+
                 if len(title_line) > 2:
                     abs = abs_line[2]
-    
+
                 if len(doc_id) == 0:
                     continue
-    
+
                 annotation.text = (title + ' ' + abs).strip()
-    
+
                 for line in lines[2:]:
                     fields = line.split('\t')
                     start = int(fields[1])
@@ -80,7 +81,7 @@ with open(pmid_file) as handle:
                             if annotation.text[start - i:end].lower() == text.lower():
                                 start -= i
                                 break
-                            elif annotation.text[start:end-i].lower() == text.lower():
+                            elif annotation.text[start:end - i].lower() == text.lower():
                                 end -= i
                                 break
                             elif annotation.text[start - i:end - i].lower() == text.lower():
@@ -91,7 +92,7 @@ with open(pmid_file) as handle:
                                 start += i
                                 end += i
                                 break
-                            
+
                         if start < 0:
                             start = 0
                         elif start >= len(annotation.text):
@@ -105,7 +106,7 @@ with open(pmid_file) as handle:
 
                     # in case gennorm changes cases
                     text = annotation.text[start:end]
-    
+
                     if len(fields) > 5:
                         norm_ids = fields[5].split(',')
                     try:
