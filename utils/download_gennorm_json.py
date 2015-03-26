@@ -104,6 +104,11 @@ with open(pmid_file) as handle:
                         elif end > len(annotation.text):
                             end = len(annotation.text)
 
+                    if annotation.text[start:end].lower() != text.lower():
+                        print(doc_id, "can not match entity text with abstract text",
+                              annotation.text[start:end], '|', line)
+                        continue
+
                     # in case gennorm changes cases
                     text = annotation.text[start:end]
 
@@ -129,9 +134,9 @@ with open(pmid_file) as handle:
                 handle.write(json.dumps(packed))
                 handle.write('\n')
 
+        time.sleep(2)
         print(curr)
         curr += step
-        time.sleep(2)
         # break
 
     print(categories)
