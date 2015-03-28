@@ -31,21 +31,34 @@ with open('data/Gennorm/gennorm.csv', encoding='utf-8') as gn:
 print('load', len(gene_norms), 'documents')
 print('fixing downloaded gennorm GN results')
 
-with open('data/Gennorm/jsonlines.json', 'r') as handle, \
+with open('data/Gennorm/jsonlines_2.json', 'r') as handle, \
         open('data/Gennorm/jsonlines_fixed.json', 'w') as handle_fixed:
     for line in handle:
         line = line.strip()
         annotation = Annotation.loads(line, 'json')
-        
+
+        # fix entity property split problem
+        '''
+        for entity in annotation.entities:
+            norm_ids = entity.property.get('norm_id')
+            if norm_ids is not None:
+                original_text = ','.join(norm_ids)
+                entity.property['norm_id'] = original_text.split('/')
+        '''
+
         genes = [e for e in annotation.entities if e.category == 'Gene']
+        existed_genes = set()
         if len(genes) > 0:
-            handle_fixed.write(line + '\n')
-            continue
+            for gene in genes:
+                existed_genes.add((gene.start, gene.end))
+            # continue if there are already genes
+            #handle_fixed.write(line + '\n')
+            #continue
             
         doc_id = annotation.doc_id
         candidates = gene_norms.get(doc_id)
         if candidates is None:
-            handle_fixed.write(line + '\n')
+            handle_fixed.write(annotation.dumps() + '\n')
             continue
             
         for c in candidates:
@@ -83,6 +96,10 @@ with open('data/Gennorm/jsonlines.json', 'r') as handle, \
                 print(doc_id, "can not match entity text with abstract text", 
                       start, end, text,
                       annotation.text[start:end], file=sys.stderr)
+                continue
+
+            # the gene is already normalized
+            if (start, end) in existed_genes:
                 continue
                 
             # in case gennorm changes cases

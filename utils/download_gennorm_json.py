@@ -113,7 +113,7 @@ with open(pmid_file) as handle:
                     text = annotation.text[start:end]
 
                     if len(fields) > 5:
-                        norm_ids = fields[5].split(',')
+                        norm_ids = fields[5].split('/')
                     try:
                         entity = annotation.add_entity(category, start, end, text)
                         if len(norm_ids) > 0:
