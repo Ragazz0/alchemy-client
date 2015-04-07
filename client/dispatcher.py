@@ -128,7 +128,7 @@ class CorpusProcessor(object):
     def save_annotation(annotations, aligned_corpus_path):
         writer = AnnWriter()
         for packed in annotations:
-            annotation = Annotation.loads(packed, 'json')
+            annotation = Annotation.loads(packed, 'dict')
             doc_id = annotation.doc_id
             file_path = os.path.join(aligned_corpus_path, doc_id+'.txt')
             FileProcessor.write_file(file_path, annotation.text)
@@ -263,7 +263,6 @@ class CorpusProcessor(object):
         :param is_test: 0: read corpus; 1: align corpus; 2: import corpus
         :type is_test: int
         """
-        
         is_read, is_align, is_import = False, False, False
         if mode == 0:
             is_read = True
@@ -321,7 +320,7 @@ class CorpusProcessor(object):
         # use docs stream
         files_all = self.get_files_all(corpus_path)
         annotations_stream = self.get_annotations_slice(files_all, mode, 
-                                                        {"aligned_collection_path":aligned_corpus_path})
+                                                        {"aligned_corpus_path":aligned_corpus_path})
         results = pool.imap(post_annotation_slice, annotations_stream)
 
         imported_total_count = 0

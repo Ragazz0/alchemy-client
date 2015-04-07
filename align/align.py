@@ -22,8 +22,9 @@ class AnnotationAligner(object):
         # base_alginment = Hirschberg, segment_half = True, segment = 50, diff = 50
         aligned_gold, aligned_altered = cls.aligner.align(original_text, altered_text,
                                                           segment_half=True, base_alignment='Hirschberg')
-
-        alter2gold = cls.aligner.map_alignment(''.join(aligned_gold), ''.join(aligned_altered))
+        
+        original_text = ''.join(original_text)
+        alter2gold = cls.aligner.map_alignment(aligned_gold, aligned_altered)
 
         for entity in annotation.get('entity_set'):
             start = int(entity.get('start'))
