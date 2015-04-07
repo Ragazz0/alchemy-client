@@ -9,55 +9,27 @@ from multiprocessing import Pool
 from multiprocessing import current_process
 import types
 import traceback
+from submodules.annotation.annotate import Annotation
+from submodules.annotation.writers import AnnWriter
+from submodules.annotation.utils import FileProcessor
 
-# def post_annotation_slice(info):
-# # parallel part
-# # python multiprocessing pool only supports module-level function
-#     try:
-#         file_slice, curr_count, total_count, is_test = info
-# 
-#         # get annotations
-#         annotations_stream = CorpusProcessor.get_annotations_slice(file_slice)
-#         read_count = 0
-#         imported_count = 0
-#         current = current_process()
-# 
-#         for annotations in annotations_stream:
-#             read_count += len(annotations)
-#             if not is_test:
-#                 # get original text
-#                 # dict_keys is not serializable
-#                 doc_ids = list(annotations.keys())
-#                 original_texts = CorpusProcessor.get_original_text(doc_ids)
-# 
-#                 # align
-#                 CorpusProcessor.align(annotations, original_texts)
-# 
-#                 # post annotations
-#                 response = CorpusProcessor.post_annotation(annotations)
-#                 # print(response)
-#                 imported_count = response.get('imported_doc')
-# 
-#             print("%s: read %s docs / imported %s docs / processed %s files" %
-#                   (current.name, read_count, imported_count, total_count))
-# 
-#         return read_count, imported_count, total_count
-#     except Exception as e:
-#         print(e)
-#         return None, None, None
 
 def post_annotation_slice(info):
     # parallel part
     # python multiprocessing pool only supports module-level function
     try:
-        annotations, countfile, is_test = info
+        annotations, countfile, mode, args = info
+
+        is_read = (mode == 0)
+        is_align = (mode == 1)
+        is_import = (mode == 2)
 
         # get annotations
         read_count = 0
         imported_count = 0
         current = current_process()
         read_count += len(annotations)
-        if not is_test:
+        if is_import or is_align:
             # get original text
             # dict_keys is not serializable
             doc_ids = [a.get('doc_id') for a in annotations if a.get('doc_id') is not None]
@@ -66,10 +38,15 @@ def post_annotation_slice(info):
             # align
             CorpusProcessor.align(annotations, original_texts)
 
-            # post annotations
-            response = CorpusProcessor.post_annotation(annotations)
-            # print(response)
-            imported_count = response.get('imported_doc')
+            if is_import:
+                # post annotations
+                response = CorpusProcessor.post_annotation(annotations)
+                # print(response)
+                imported_count = response.get('imported_doc')
+
+            elif is_align:
+                aligned_corpus_path = args.get('aligned_corpus_path')
+                CorpusProcessor.save_annotation(annotations, aligned_corpus_path)                
 
         # print("%s: read %s docs / imported %s docs / processed %s file" %
         #       (current.name, read_count, imported_count, countfile))
@@ -146,6 +123,17 @@ class CorpusProcessor(object):
                                         'entity_category_set': json.dumps(config.processor.ENTITY_CATEGORY)}
         )
         return response
+
+    @staticmethod
+    def save_annotation(annotations, aligned_corpus_path):
+        writer = AnnWriter()
+        for packed in annotations:
+            annotation = Annotation.loads(packed, 'json')
+            doc_id = annotation.doc_id
+            file_path = os.path.join(aligned_corpus_path, doc_id+'.txt')
+            FileProcessor.write_file(file_path, annotation.text)
+            file_path = os.path.join(aligned_corpus_path, doc_id+'.ann')
+            writer.write(file_path, annotation)
 
     @staticmethod
     def align(annotations, original_texts):
@@ -226,7 +214,7 @@ class CorpusProcessor(object):
             yield curr_slice, curr_count, total_count, is_test
 
     @staticmethod
-    def get_annotations_slice(files_slice, is_test):
+    def get_annotations_slice(files_slice, mode, args):
         """ a generator for annotations stream
         :param files_slice: a list of file ids
         :type files_slice: list | generator
@@ -245,7 +233,7 @@ class CorpusProcessor(object):
                     try:
                         for _ in range(need_length):
                             need_stream.append(next(slice_annotations))
-                        yield need_stream, count, is_test
+                        yield need_stream, count, mode, args
                         need_stream = []
                         need_length = config.DOC_STEP
                     except StopIteration:
@@ -256,7 +244,7 @@ class CorpusProcessor(object):
                     if len(need_stream) < config.DOC_STEP:
                         break
                     else:
-                        yield need_stream, count, is_test
+                        yield need_stream, count, mode, args
                         need_stream = []
                         # shrink list
                         slice_annotations = slice_annotations[need_length:]
@@ -265,18 +253,26 @@ class CorpusProcessor(object):
             else:
                 raise TypeError('process() should return list or generator.')
 
-        yield need_stream, count, is_test
+        yield need_stream, count, mode, args
 
-    def process(self, corpus_path, is_test=True):
+    def process(self, corpus_path, mode=0, aligned_corpus_path=None):
         """ read corpus, get original text from server, align, and send
         annotations back to server, using multiprocessing
         :param corpus_path: corpus folder path
         :type corpus_path: str
-        :param is_test: if True, only read corpus without any server-side operation
-        :type is_test: bool
+        :param is_test: 0: read corpus; 1: align corpus; 2: import corpus
+        :type is_test: int
         """
+        
+        is_read, is_align, is_import = False, False, False
+        if mode == 0:
+            is_read = True
+        elif mode == 1:
+            is_align = True
+        elif mode == 2:
+            is_import = True
 
-        if not is_test:
+        if is_import:
             # add/verify user
             print('Add or verify user ' + config.USERNAME)
             response = self.post_user(config.USERNAME, config.PASSWORD)
@@ -324,7 +320,8 @@ class CorpusProcessor(object):
 
         # use docs stream
         files_all = self.get_files_all(corpus_path)
-        annotations_stream = self.get_annotations_slice(files_all, is_test)
+        annotations_stream = self.get_annotations_slice(files_all, mode, 
+                                                        {"aligned_collection_path":aligned_corpus_path})
         results = pool.imap(post_annotation_slice, annotations_stream)
 
         imported_total_count = 0

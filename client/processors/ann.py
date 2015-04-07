@@ -6,7 +6,8 @@ from submodules.annotation.utils import FileProcessor
 SUFFIX = ('.ann', '.txt')
 
 # entity categories
-ENTITY_CATEGORY = ('SpecificDisease', 'Modifier', 'DiseaseClass', 'CompositeMention')
+#ENTITY_CATEGORY = ('SpecificDisease', 'Modifier', 'DiseaseClass', 'CompositeMention')
+ENTITY_CATEGORY = ('Gene', 'Family', 'Complex', 'MiRNA')
 
 # relation categories
 RELATION_CATEGORY = None

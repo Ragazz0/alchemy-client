@@ -3,6 +3,7 @@
 Usage:
   alchemy.py <collection_path>...
   alchemy.py --import <collection_path>
+  alchemy.py --align <collection_path> <aligned_collection_path>
   alchemy.py (-h | --help)
 
 Options:
@@ -17,6 +18,11 @@ from docopt import docopt
 if __name__ == '__main__':
     arguments = docopt(__doc__)
     collection = arguments.get('<collection_path>')[0]
-    is_test = not arguments.get('--import')
+    aligned_collection = arguments.get('<aligned_collection_path>')[0]
+    mode = 0
+    if arguments.get('--align'):
+        mode = 1
+    elif arguments.get('--import'):
+        mode = 2
     processor = CorpusProcessor()
-    processor.process(collection, is_test=is_test)
+    processor.process(collection, mode, aligned_collection)

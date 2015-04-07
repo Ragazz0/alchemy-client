@@ -16,7 +16,8 @@ class AnnotationAligner(object):
         :return: None
         :rtype: None
         """
-        altered_text = annotation.get('text')
+        altered_text = list(annotation.get('text'))
+        original_text = list(original_text)
 
         # base_alginment = Hirschberg, segment_half = True, segment = 50, diff = 50
         aligned_gold, aligned_altered = cls.aligner.align(original_text, altered_text,
